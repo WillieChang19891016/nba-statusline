@@ -18,8 +18,10 @@ Today's NBA scores and box scores for [Claude Code](https://docs.claude.com/en/d
 ### Global (recommended)
 
 ```sh
-npm install -g nba-statusline
+npm install -g WillieChang19891016/nba-statusline
 ```
+
+This installs straight from GitHub — no npm registry account needed. Pin to a specific commit or tag with `#sha` / `#v0.2.1` if you want.
 
 Then add this to `~/.claude/settings.json`:
 
@@ -39,7 +41,7 @@ Then add this to `~/.claude/settings.json`:
 {
   "statusLine": {
     "type": "command",
-    "command": "npx -y nba-statusline@latest",
+    "command": "npx -y github:WillieChang19891016/nba-statusline",
     "refreshInterval": 30
   }
 }
@@ -126,7 +128,7 @@ The command relies on two helper binaries the package ships alongside `nba-statu
 - `nba-games` — prints today's games as JSON (used to build the picker).
 - `nba-box <eventId>` — prints a plain-text box score for one game.
 
-Both are on `PATH` after `npm install -g nba-statusline`. They're also useful directly from the terminal.
+Both are on `PATH` after `npm install -g WillieChang19891016/nba-statusline`. They're also useful directly from the terminal.
 
 ## Troubleshooting
 
