@@ -1,0 +1,25 @@
+{
+  "name": "nba-statusline",
+  "version": "0.1.0",
+  "description": "Today's NBA scores in the Claude Code status line.",
+  "bin": {
+    "nba-statusline": "bin/nba-statusline.js"
+  },
+  "main": "bin/nba-statusline.js",
+  "engines": {
+    "node": ">=18"
+  },
+  "license": "MIT",
+  "keywords": [
+    "claude-code",
+    "statusline",
+    "nba",
+    "scores",
+    "espn"
+  ],
+  "files": [
+    "bin/",
+    "README.md",
+    "LICENSE"
+  ]
+}

@@ -1,0 +1,36 @@
+{
+  "events": [
+    {
+      "date": "2026-05-08T03:30Z",
+      "competitions": [
+        {
+          "competitors": [
+            { "homeAway": "home", "team": { "abbreviation": "BOS" }, "score": "0" },
+            { "homeAway": "away", "team": { "abbreviation": "LAL" }, "score": "0" }
+          ],
+          "status": {
+            "period": 0,
+            "displayClock": "0:00",
+            "type": { "state": "pre", "shortDetail": "11:30 PM ET" }
+          }
+        }
+      ]
+    },
+    {
+      "date": "2026-05-08T01:00Z",
+      "competitions": [
+        {
+          "competitors": [
+            { "homeAway": "home", "team": { "abbreviation": "DEN" }, "score": "0" },
+            { "homeAway": "away", "team": { "abbreviation": "OKC" }, "score": "0" }
+          ],
+          "status": {
+            "period": 0,
+            "displayClock": "0:00",
+            "type": { "state": "pre", "shortDetail": "9:00 PM ET" }
+          }
+        }
+      ]
+    }
+  ]
+}

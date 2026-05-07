@@ -1,0 +1,36 @@
+{
+  "events": [
+    {
+      "date": "2026-05-07T23:30Z",
+      "competitions": [
+        {
+          "competitors": [
+            { "homeAway": "home", "team": { "abbreviation": "BOS" }, "score": "98" },
+            { "homeAway": "away", "team": { "abbreviation": "LAL" }, "score": "102" }
+          ],
+          "status": {
+            "period": 4,
+            "displayClock": "2:30",
+            "type": { "state": "in", "shortDetail": "Q4 2:30" }
+          }
+        }
+      ]
+    },
+    {
+      "date": "2026-05-07T23:00Z",
+      "competitions": [
+        {
+          "competitors": [
+            { "homeAway": "home", "team": { "abbreviation": "PHX" }, "score": "85" },
+            { "homeAway": "away", "team": { "abbreviation": "GSW" }, "score": "88" }
+          ],
+          "status": {
+            "period": 3,
+            "displayClock": "5:12",
+            "type": { "state": "in", "shortDetail": "Q3 5:12" }
+          }
+        }
+      ]
+    }
+  ]
+}

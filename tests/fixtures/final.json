@@ -1,0 +1,36 @@
+{
+  "events": [
+    {
+      "date": "2026-05-07T23:30Z",
+      "competitions": [
+        {
+          "competitors": [
+            { "homeAway": "home", "team": { "abbreviation": "BOS" }, "score": "110" },
+            { "homeAway": "away", "team": { "abbreviation": "LAL" }, "score": "118" }
+          ],
+          "status": {
+            "period": 4,
+            "displayClock": "0:00",
+            "type": { "state": "post", "shortDetail": "Final" }
+          }
+        }
+      ]
+    },
+    {
+      "date": "2026-05-07T22:00Z",
+      "competitions": [
+        {
+          "competitors": [
+            { "homeAway": "home", "team": { "abbreviation": "MIA" }, "score": "108" },
+            { "homeAway": "away", "team": { "abbreviation": "NYK" }, "score": "112" }
+          ],
+          "status": {
+            "period": 5,
+            "displayClock": "0:00",
+            "type": { "state": "post", "shortDetail": "Final/OT" }
+          }
+        }
+      ]
+    }
+  ]
+}
