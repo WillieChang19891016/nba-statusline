@@ -1,6 +1,6 @@
 # nba-statusline
 
-Today's NBA scores in the [Claude Code](https://docs.claude.com/en/docs/claude-code) status line.
+Today's NBA scores and box scores for [Claude Code](https://docs.claude.com/en/docs/claude-code) — a status line that shows live scores, plus a `/nba-box` slash command for full per-player box scores.
 
 ```
 ● MIN  55 -  89 SA  · Q3 3:02
@@ -93,6 +93,30 @@ NO_COLOR=1 nba-statusline
 | Pre      | `🏀 LAL @ BOS · 7:30 PM` (your local time)        |
 | No games | `🏀 No NBA games today`                           |
 | Offline  | `🏀 NBA scores unavailable` (no cache available)  |
+
+## Box scores via slash command
+
+Once installed, the package also ships a `/nba-box` Claude Code slash command. It lists today's games, lets you pick one, and prints a per-team box score (MIN / PTS / FG / 3PT / FT / REB / AST / STL / BLK / +/-) as a markdown table inside the chat.
+
+Setup (one-time, until you publish a real plugin):
+
+```sh
+# copy the slash command into your user commands directory
+cp ~/path/to/nba-statusline/commands/nba-box.md ~/.claude/commands/nba-box.md
+```
+
+Or on Windows PowerShell:
+
+```powershell
+Copy-Item C:\path\to\nba-statusline\commands\nba-box.md $HOME\.claude\commands\nba-box.md
+```
+
+The command relies on two helper binaries the package ships alongside `nba-statusline`:
+
+- `nba-games` — prints today's games as JSON (used to build the picker).
+- `nba-box <eventId>` — prints a plain-text box score for one game.
+
+Both are on `PATH` after `npm install -g nba-statusline`. They're also useful directly from the terminal.
 
 ## Troubleshooting
 

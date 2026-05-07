@@ -1,29 +1,15 @@
 #!/usr/bin/env node
 'use strict';
 
-const fs = require('fs');
-const path = require('path');
-const os = require('os');
+const espn = require('../lib/espn');
 
-const ESPN_URL = 'https://site.api.espn.com/apis/site/v2/sports/basketball/nba/scoreboard';
-const NBA_CDN_URL = 'https://cdn.nba.com/static/json/staticData/scheduleLeagueV2.json';
-const CACHE_DIR = path.join(os.tmpdir(), 'nba-statusline');
-const CACHE_FILE = path.join(CACHE_DIR, 'scores.json');
-const CACHE_TMP = path.join(CACHE_DIR, 'scores.json.tmp');
-const FETCH_TIMEOUT_MS = 1500;
 const STDIN_TIMEOUT_MS = 150;
-const TTL_LIVE_MS = 25_000;
-const TTL_PRE_BUFFER_MS = 30_000;
-const TTL_MAX_IDLE_MS = 6 * 60 * 60_000;
-const VERSION = '0.1.0';
 
 const noColor = process.env.NO_COLOR != null && process.env.NO_COLOR !== '';
 const maxGames = (() => {
   const n = parseInt(process.env.NBA_STATUSLINE_MAX || '6', 10);
   return Number.isFinite(n) && n > 0 ? n : 6;
 })();
-const fixture = process.env.NBA_STATUSLINE_FIXTURE;
-const useBackup = process.env.NBA_STATUSLINE_BACKUP === 'nbacdn';
 
 const ansi = (code, s) => (noColor ? s : `\x1b[${code}m${s}\x1b[0m`);
 const bold = (s) => ansi('1', s);
@@ -36,32 +22,16 @@ async function main() {
 
     let payload;
     let staleAt = 0;
-
-    if (fixture) {
-      payload = await fetchPayload();
-    } else {
-      const cached = readCacheIfFresh();
-      if (cached) {
-        payload = cached;
-      } else {
-        try {
-          payload = await fetchPayload();
-          const refreshAfter = computeRefreshAfter(normalizeGames(payload));
-          writeCacheAtomic(payload, refreshAfter);
-        } catch (_) {
-          const stale = readCacheRaw();
-          if (stale && stale.payload) {
-            payload = stale.payload;
-            staleAt = stale.fetchedAt || 0;
-          } else {
-            process.stdout.write('🏀 NBA scores unavailable\n');
-            return;
-          }
-        }
-      }
+    try {
+      const r = await espn.fetchScoreboard();
+      payload = r.payload;
+      staleAt = r.staleAt || 0;
+    } catch (_) {
+      process.stdout.write('🏀 NBA scores unavailable\n');
+      return;
     }
 
-    const games = normalizeGames(payload);
+    const games = espn.normalizeGames(payload);
     if (games.length === 0) {
       process.stdout.write('🏀 No NBA games today\n');
       return;
@@ -99,97 +69,6 @@ function drainStdin() {
     process.stdin.on('error', () => { clearTimeout(timer); finish(); });
     try { process.stdin.resume(); } catch (_) {}
   });
-}
-
-async function fetchPayload() {
-  if (fixture) {
-    const fixturePath = path.join(__dirname, '..', 'tests', 'fixtures', `${fixture}.json`);
-    return JSON.parse(fs.readFileSync(fixturePath, 'utf8'));
-  }
-  const url = useBackup ? NBA_CDN_URL : ESPN_URL;
-  const ac = new AbortController();
-  const t = setTimeout(() => ac.abort(), FETCH_TIMEOUT_MS);
-  try {
-    const r = await fetch(url, {
-      signal: ac.signal,
-      headers: { 'User-Agent': `nba-statusline/${VERSION}` },
-    });
-    if (!r.ok) throw new Error(`HTTP ${r.status}`);
-    return await r.json();
-  } finally {
-    clearTimeout(t);
-  }
-}
-
-function readCacheRaw() {
-  try {
-    const raw = fs.readFileSync(CACHE_FILE, 'utf8');
-    return JSON.parse(raw);
-  } catch (_) {
-    return null;
-  }
-}
-
-function readCacheIfFresh() {
-  const raw = readCacheRaw();
-  if (!raw || !raw.payload || !raw.refreshAfter) return null;
-  return Date.now() < raw.refreshAfter ? raw.payload : null;
-}
-
-function writeCacheAtomic(payload, refreshAfter) {
-  try {
-    fs.mkdirSync(CACHE_DIR, { recursive: true });
-    fs.writeFileSync(
-      CACHE_TMP,
-      JSON.stringify({ fetchedAt: Date.now(), refreshAfter, payload })
-    );
-    fs.renameSync(CACHE_TMP, CACHE_FILE);
-  } catch (_) {}
-}
-
-function computeRefreshAfter(games) {
-  const now = Date.now();
-  if (games.some((g) => g.state === 'in')) return now + TTL_LIVE_MS;
-  const upcoming = games
-    .filter((g) => g.state === 'pre' && g.startISO)
-    .map((g) => Date.parse(g.startISO))
-    .filter((t) => Number.isFinite(t) && t > now);
-  if (upcoming.length > 0) {
-    const next = Math.min(...upcoming);
-    return Math.min(next + TTL_PRE_BUFFER_MS, now + TTL_MAX_IDLE_MS);
-  }
-  return now + TTL_MAX_IDLE_MS;
-}
-
-function normalizeGames(payload) {
-  const events = payload && payload.events;
-  if (!Array.isArray(events)) return [];
-  const games = [];
-  for (const e of events) {
-    const c = e.competitions && e.competitions[0];
-    if (!c || !Array.isArray(c.competitors) || c.competitors.length < 2) continue;
-    const home = c.competitors.find((x) => x.homeAway === 'home');
-    const away = c.competitors.find((x) => x.homeAway === 'away');
-    if (!home || !away) continue;
-    const status = c.status || {};
-    const type = status.type || {};
-    games.push({
-      home: {
-        abbr: (home.team && home.team.abbreviation) || '???',
-        score: home.score != null ? String(home.score) : '',
-      },
-      away: {
-        abbr: (away.team && away.team.abbreviation) || '???',
-        score: away.score != null ? String(away.score) : '',
-      },
-      state: type.state || 'pre',
-      shortDetail: type.shortDetail || '',
-      period: status.period || 0,
-      clock: status.displayClock || '',
-      startISO: e.date || null,
-    });
-  }
-  return games;
 }
 
 function sortGames(games) {

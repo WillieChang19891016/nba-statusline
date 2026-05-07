@@ -1,9 +1,11 @@
 {
   "name": "nba-statusline",
-  "version": "0.1.0",
-  "description": "Today's NBA scores in the Claude Code status line.",
+  "version": "0.2.0",
+  "description": "Today's NBA scores and box scores for Claude Code.",
   "bin": {
-    "nba-statusline": "bin/nba-statusline.js"
+    "nba-statusline": "bin/nba-statusline.js",
+    "nba-games": "bin/nba-games.js",
+    "nba-box": "bin/nba-box.js"
   },
   "main": "bin/nba-statusline.js",
   "engines": {
@@ -26,10 +28,13 @@
     "statusline",
     "nba",
     "scores",
+    "boxscore",
     "espn"
   ],
   "files": [
     "bin/",
+    "lib/",
+    "commands/",
     "README.md",
     "LICENSE"
   ]
