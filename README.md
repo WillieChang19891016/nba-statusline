@@ -96,7 +96,17 @@ NO_COLOR=1 nba-statusline
 
 ## Box scores via slash command
 
-Once installed, the package also ships a `/nba-box` Claude Code slash command. It lists today's games, lets you pick one, and prints a per-team box score (MIN / PTS / FG / 3PT / FT / REB / AST / STL / BLK / +/-) as a markdown table inside the chat.
+Once installed, the package also ships a `/nba-box` Claude Code slash command. It runs in a **forked subagent** so the raw box-score data, intermediate JSON, and reasoning **stay out of your main conversation context** — only the final markdown table comes back as a single message.
+
+Usage:
+
+- `/nba-box` — auto-picks a game (live → pre → post)
+- `/nba-box LAL` — pick by team abbreviation
+- `/nba-box 401871160` — pick by ESPN event id
+
+Output is a per-team markdown table (MIN / PTS / FG / 3PT / FT / REB / AST / STL / BLK / +/-).
+
+**Requires `CLAUDE_CODE_FORK_SUBAGENT=1`** in your Claude Code env (settings.json `env` block) plus Claude Code v2.1.117+. Without it the skill still runs, just inline (raw output ends up in your main context).
 
 Setup (one-time, until you publish a real plugin):
 

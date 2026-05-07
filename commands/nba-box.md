@@ -1,39 +1,39 @@
 ---
 description: 查詢今天 NBA 某場比賽的 box score（球員個人數據）
+context: fork
+agent: general-purpose
+argument-hint: "[team-abbr|eventId]"
+allowed-tools: Bash
 ---
 
-# 任務：查詢今天的 NBA box score
+# 任務：查詢今天 NBA box score
+
+使用者輸入：`$ARGUMENTS`（可能為空、team abbreviation 如 LAL、或 eventId 如 401871160）。
 
 依序執行：
 
-## 1. 取得今天的場次
+## 1. 取得今天場次
 
-跑 Bash：`nba-games`
+跑 Bash：`nba-games`，把 stdout 當 JSON 解析，拿到 `games` 陣列。
 
-把 stdout 當 JSON 解析。
+- 若 `games` 是空陣列 → 回答「今天沒有 NBA 比賽」並結束。
+- 若有 `error` 欄位 → 回答「無法取得 NBA 賽程：{error}」並結束。
 
-- 如果 `games` 是空陣列 → 回答「今天沒有 NBA 比賽」結束。
-- 如果有 `error` 欄位 → 回答「無法取得 NBA 賽程：{error}」結束。
+## 2. 找出目標場次 id
 
-## 2. 讓使用者選場次
+依 `$ARGUMENTS` 解析：
 
-排序：state === `in`（live）→ `pre`（未開賽）→ `post`（已結束）；同類別內維持 nba-games 原順序。
+- **純數字**（≥ 4 位）→ 視為 eventId，從 `games` 找 `id` 完全相符。
+- **字母**（≤ 4 字）→ 視為 team abbreviation，找 `home` 或 `away` 不分大小寫完全相符的場次。
+- **空字串** → 自動挑：先取 `state === 'in'` 第一場、否則 `pre` 開賽時間最近的、否則 `post` 開賽時間最近的。
 
-如果**只有 1 場**：跳過此步驟，直接用該場 `id` 進入第 3 步。
-
-如果**有 2 場以上**：用 AskUserQuestion 列出最多 4 場（live 優先 → pre → post 截斷）：
-
-- option label 格式：
-  - `state === 'in'` → `🔴 {away} {awayScore} - {homeScore} {home}`（例：`🔴 MIN 95 - 133 SA`）
-  - `state === 'post'` → `{away} {awayScore} - {homeScore} {home}`
-  - `state === 'pre'` → `{away} @ {home}`
-- option description 寫 `{shortDetail} · ID {id}`（如 `Final · ID 401871153` 或 `Q4 2:30 · ID 401871160`）
+找不到對應場次 → 回答「找不到 "{ARGUMENTS}" 對應的場次。今天場次：」+ 列出每場 `{away} {awayScore} - {homeScore} {home} ({state})` 並結束。
 
 ## 3. 跑 box score
 
-從使用者選的 label 找回對應 `id`，跑 Bash：`nba-box {id}`
+從找到的 game 物件取 `id`，跑 Bash：`nba-box {id}`
 
-如果 exit 非 0：把 stderr 訊息直接回報使用者並結束。
+- 若 exit 非 0：把 stderr 訊息直接回報給使用者並結束。
 
 ## 4. 把 stdout 轉 markdown
 
@@ -52,4 +52,4 @@ DNP: <names>          (optional last line)
 - 11 欄 markdown table（PLAYER / MIN / PTS / FG / 3PT / FT / REB / AST / STL / BLK / +/-）
 - 若有 `DNP:` 行 → 表格下方加 `*DNP: ...*`
 
-兩個區塊之間加一個空行。表格前後不要再寫額外解釋（保持簡潔），除非使用者後續追問。
+兩個區塊之間加一個空行。表格前後不要寫額外解釋（保持簡潔），除非使用者後續追問。
