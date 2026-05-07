@@ -53,7 +53,10 @@ After editing `settings.json`, the status line refreshes on the next assistant m
 
 The script reads JSON from stdin (Claude Code passes session metadata; we drain it but don't use it), fetches today's scoreboard from ESPN, caches the response in `os.tmpdir()/nba-statusline/scores.json`, and writes formatted lines to stdout.
 
-- **Cache TTL** — 25 seconds while any game is live, 5 minutes otherwise. With `refreshInterval: 30` ESPN gets hit roughly twice a minute during live games.
+- **Cache TTL** — adapts to what's happening, so we don't poll ESPN when nothing is going to change:
+  - **Live game**: 25 seconds (track score updates closely)
+  - **Upcoming game today**: cache until the next tip-off + 30 seconds (no point polling before the game starts)
+  - **All games finished / no games today**: 6 hours (avoid pointless polling; the 6-hour cap ensures the next day's schedule still gets picked up)
 - **Timeouts** — fetch is hard-capped at 1.5 seconds. If ESPN is slow or offline and there's a stale cache, the stale data is shown with a `(cached Nm ago)` suffix. With no cache at all, the line shows `🏀 NBA scores unavailable` instead of going blank.
 - **Always exits 0** — a blank status line can't be distinguished from a broken script. Every code path prints at least one line.
 

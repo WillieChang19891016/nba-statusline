@@ -13,7 +13,8 @@ const CACHE_TMP = path.join(CACHE_DIR, 'scores.json.tmp');
 const FETCH_TIMEOUT_MS = 1500;
 const STDIN_TIMEOUT_MS = 150;
 const TTL_LIVE_MS = 25_000;
-const TTL_IDLE_MS = 5 * 60_000;
+const TTL_PRE_BUFFER_MS = 30_000;
+const TTL_MAX_IDLE_MS = 6 * 60 * 60_000;
 const VERSION = '0.1.0';
 
 const noColor = process.env.NO_COLOR != null && process.env.NO_COLOR !== '';
@@ -45,7 +46,8 @@ async function main() {
       } else {
         try {
           payload = await fetchPayload();
-          writeCacheAtomic(payload);
+          const refreshAfter = computeRefreshAfter(normalizeGames(payload));
+          writeCacheAtomic(payload, refreshAfter);
         } catch (_) {
           const stale = readCacheRaw();
           if (stale && stale.payload) {
@@ -130,19 +132,33 @@ function readCacheRaw() {
 
 function readCacheIfFresh() {
   const raw = readCacheRaw();
-  if (!raw || !raw.payload || !raw.fetchedAt) return null;
-  const games = normalizeGames(raw.payload);
-  const hasLive = games.some((g) => g.state === 'in');
-  const ttl = hasLive ? TTL_LIVE_MS : TTL_IDLE_MS;
-  return Date.now() - raw.fetchedAt < ttl ? raw.payload : null;
+  if (!raw || !raw.payload || !raw.refreshAfter) return null;
+  return Date.now() < raw.refreshAfter ? raw.payload : null;
 }
 
-function writeCacheAtomic(payload) {
+function writeCacheAtomic(payload, refreshAfter) {
   try {
     fs.mkdirSync(CACHE_DIR, { recursive: true });
-    fs.writeFileSync(CACHE_TMP, JSON.stringify({ fetchedAt: Date.now(), payload }));
+    fs.writeFileSync(
+      CACHE_TMP,
+      JSON.stringify({ fetchedAt: Date.now(), refreshAfter, payload })
+    );
     fs.renameSync(CACHE_TMP, CACHE_FILE);
   } catch (_) {}
+}
+
+function computeRefreshAfter(games) {
+  const now = Date.now();
+  if (games.some((g) => g.state === 'in')) return now + TTL_LIVE_MS;
+  const upcoming = games
+    .filter((g) => g.state === 'pre' && g.startISO)
+    .map((g) => Date.parse(g.startISO))
+    .filter((t) => Number.isFinite(t) && t > now);
+  if (upcoming.length > 0) {
+    const next = Math.min(...upcoming);
+    return Math.min(next + TTL_PRE_BUFFER_MS, now + TTL_MAX_IDLE_MS);
+  }
+  return now + TTL_MAX_IDLE_MS;
 }
 
 function normalizeGames(payload) {
